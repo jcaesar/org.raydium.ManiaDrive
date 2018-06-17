@@ -1,0 +1,24 @@
+diff -Naur g/raydium/php/ext/dom/documenttype.c f/raydium/php/ext/dom/documenttype.c
+--- g/raydium/php/ext/dom/documenttype.c	2018-06-10 13:28:23.977375167 +0200
++++ f/raydium/php/ext/dom/documenttype.c	2018-06-10 14:54:47.001848862 +0200
+@@ -215,7 +215,7 @@
+ 		if (buff != NULL) {
+ 			xmlNodeDumpOutput (buff, NULL, (xmlNodePtr) intsubset, 0, 0, NULL);
+ 			xmlOutputBufferFlush(buff);
+-			ZVAL_STRINGL(*retval, buff->buffer->content, buff->buffer->use, 1);
++			DOM_NOT_IMPLEMENTED();
+ 			(void)xmlOutputBufferClose(buff);
+ 			return SUCCESS;
+ 		}
+diff -Naur g/raydium/php/ext/dom/node.c f/raydium/php/ext/dom/node.c
+--- g/raydium/php/ext/dom/node.c	2018-06-10 13:28:23.977375167 +0200
++++ f/raydium/php/ext/dom/node.c	2018-06-10 14:54:46.996848859 +0200
+@@ -1950,7 +1950,7 @@
+         RETVAL_FALSE;
+     } else {
+ 		if (mode == 0) {
+-			ret = buf->buffer->use;
++			DOM_NOT_IMPLEMENTED();
+ 			if (ret > 0) {
+ 				RETVAL_STRINGL((char *) buf->buffer->content, ret, 1);
+ 			} else {

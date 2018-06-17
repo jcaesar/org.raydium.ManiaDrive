@@ -1,0 +1,50 @@
+--- s/Makefile.orig	2018-06-13 15:02:34.898169693 +0200
++++ s/Makefile	2018-06-14 15:46:16.336392004 +0200
+@@ -11,9 +11,9 @@
+ OTHER_LIBS =  raydium/ode/lib/libode.a raydium/php/libs/libphp5.a
+ INCLUDE_PATH =  -Iraydium/ode/include/ -Iraydium/php/ -Iraydium/php/include -Iraydium/php/main/ -Iraydium/php/Zend -Iraydium/php/TSRM -I/usr/include/curl
+ LIBS_PATH =  -L/usr/X11R6/lib/
+-CFLAGS=-Wall
++CFLAGS=-Wall -fPIC
+ COMPILE_OPTIONS=-g -D LIBRAY
+-LDFLAGS=
++#LDFLAGS=
+ LINKING_OPTIONS=-Wl,-soname,libraydium.so.0
+ AR_OPTIONS=
+ 
+@@ -21,7 +21,13 @@
+ 
+ OBJECTS      = $(HEADERS:raydium/headers/%.h=raydium/compile/%.o)
+ 
+-all: libraydium.a libraydium.so
++all:
++	V=1 VERBOSE=1 $(MAKE) -C $(RAYDIUM_DIR)ode && cd $(RAYDIUM_DIR)ode && ln -sf ode/src/.libs lib
++	$(MAKE) -C $(RAYDIUM_DIR)php
++	$(MAKE) all_raydium
++	$(MAKE) mania_drive
++
++all_raydium: libraydium.a libraydium.so
+ 	@echo "Files created: $+"
+ 
+ help:
+@@ -76,3 +82,20 @@
+ 	@mkdir -p $(COMPILE_DIR)
+ 	@echo "Creating: $@"
+ 	@$(CC) $(COMPILE_OPTIONS) $(CFLAGS) -o $@ -c $< $(INCLUDE_PATH)
++
++################################################################################
++# So these people made a makefile. But it does not compile the main thing.
++# I guess it was 2006. -,-
++################################################################################
++mania_drive: mania_drive.c
++	echo $@
++	$(CC) $(COMPILE_OPTIONS) $(CFLAGS) -c $< $(INCLUDE_PATH)
++	$(CXX) -o $@ -g mania_drive.o $(LDFLAGS) raydium/ode/lib/libode.a raydium/php/libs/libphp5.a $(SYSTEM_LIBS) -lX11 -ldl -lpthread # for some reason not linking libraydium.a is ok…
++
++################################################################################
++# Install, made for flatpak 
++################################################################################
++install:
++	install -Dm755 mania_drive -t "$(FLATPAK_DEST)/game"
++
++# TODO: licenses

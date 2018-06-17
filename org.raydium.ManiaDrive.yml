@@ -2,9 +2,9 @@ id: org.raydium.ManiaDrive
 runtime: org.kde.Platform
 runtime-version: 5.11
 sdk: org.kde.Sdk
-command: maniadrive
-rename-desktop-file: Cutter.desktop
-rename-icon: cutter
+command: mania_runner
+#rename-desktop-file: Cutter.desktop
+#rename-icon: cutter
 finish-args:
   - --device=dri
   - --share=ipc
@@ -12,31 +12,13 @@ finish-args:
   - --socket=pulseaudio
   - --socket=wayland
   - --socket=x11
-  - --persist=.foobar # TODO
+  - --persist=.mania_drive
 
 modules:
+  - shared-modules/glew/glew.json
   - shared-modules/glu/glu-9.0.0.json
 
-  - name: php4 # why'd ya thing this needs to be packaged in a sandbox, eh?
-    sources:
-      - type: archive
-        url: https://github.com/php/php-src/archive/php-4.4.9.tar.gz
-        sha256: a62a70e051bdd5e101ea3b799d6f00c1ec197106aeb369cf64ffcd86d5673234
-    #  - type: script
-    #    dest-filename: autogen.sh
-    #    commands:
-    #      - exec autoreconf -vfi
-    #  - type: script
-    #    commands:
-    #      - touch Makefile
-    #    dest-filename: configure
-    #make-args:
-    #  - -f
-    #  - build/build.mk
-    buildsystem: simple
-    build-commands: []
-
-  - name: freeglut # net.sourceforge.torcs/net.sourceforge.torcs.json
+  - name: freeglut # from net.sourceforge.torcs/net.sourceforge.torcs.json
     buildsystem: cmake
     config-opts:
       - -DCMAKE_INSTALL_LIBDIR:PATH=/app/lib
@@ -51,34 +33,72 @@ modules:
         url: https://github.com/vancegroup/freealut/archive/freealut_1_1_0.tar.gz
         sha256: c3880d7dbb90c7db54e1d6b88aa0a34dd9e2d828fd389be0d2cbb2632b0885dd
 
-  - name: opende
+  - name: v4l-utils
+    # mostly from com.skype.Client/com.skype.Client.json
+    config-opts:
+      - --disable-static
+      - --disable-doxygen-doc
+      - --disable-libdvbv5
+      - --disable-v4l-utils
+      - --disable-qv4l2
+      - --with-udevdir=/app/lib/udev/
+    post-install:
+      - install -dm755 /app/include/linux
+      - ln -s /app/include/libv4l1-videodev.h /app/include/linux/videodev.h 
+    cleanup:
+      /include
+      /lib/pkgconfig
+      /share/man
+      *.la
     sources:
       - type: archive
-        url: https://downloads.sourceforge.net/project/opende/ODE/0.13/ode-0.13.tar.bz2
-        sha256: 34ce3e236e313bf109a0cb5546d2fca462aed99f29a42e62bc1463b803c31ef9
-      - type: file
-        path: raydium-opende-user-settings
-        dest: config
-        dest-filename: user-settings
-      - type: file
-        path: raydium-opende-config.h
-        dest-filename: include/ode/config.h
+        url: https://linuxtv.org/downloads/v4l-utils/v4l-utils-1.12.5.tar.bz2
+        sha256: 0618162ddb0b57fe7c45407d4d66ed79e3a134cdbc9e72598d34e61d3359e20d
 
+  - name: maniadrive-data
+    buildsystem: simple
+    build-commands:
+        - cp -ar * /app/
+    sources:
+      - type: archive
+        url: https://downloads.sourceforge.net/project/maniadrive/maniadrive/1.2/ManiaDrive-1.2-data.tar.gz
+        sha256: 705ff32889e328005182d8962a6fbb56ea061b5d9bb374cd6c4ba23c96254422 
 
-  # is contained in the maniadrive sources
-  #- name: raydium
-  #  sources:
-  #    - type: archive
-  #      url: http://freeway.raydium.org/data/raydium-2005-09-21.tar.gz
-  #      sha256: 9f90b77b0e0acc9a2aaa3f2670e95a9afb110cbc9fd2664a74e161c108bdb879
-  #    - type: patch
-  #      path: raydium-configure-LDFLAGS.patch
-
-  - name: maniadrive
+  - name: maniadrive-engine
     sources:
       - type: archive
         url: https://downloads.sourceforge.net/project/maniadrive/maniadrive/1.2/ManiaDrive-1.2-src.tar.gz
         sha256: ffa8bafe3b2e796602e2dd462d4d0fdff2cbf43388d1bae029487b7f17e68b84
       - type: archive
-        url: https://downloads.sourceforge.net/project/maniadrive/maniadrive/1.2/ManiaDrive-1.2-data.tar.gz
-        sha256: 705ff32889e328005182d8962a6fbb56ea061b5d9bb374cd6c4ba23c96254422 
+        #url: http://freeway.raydium.org/data/stable_mirrors/ode.tar.gz
+        #sha256: 8b2b6a7ab6a5e2be13283ffcd184fd7f63df889b2457f18436d152b68a1122c8
+        url: https://downloads.sourceforge.net/project/opende/ODE/0.13/ode-0.13.tar.bz2
+        sha256: 34ce3e236e313bf109a0cb5546d2fca462aed99f29a42e62bc1463b803c31ef9
+        dest: raydium/ode
+      - type: archive
+        url: http://museum.php.net/php5/php-5.2.17.tar.gz
+        sha256: 1abe07c1fdd64184708a3ba179abcfcca5662a4e0d2037eb2748b75abc42e767
+        dest: raydium/php
+      - type: patch
+        path: maniadrive-configure.patch
+      - type: patch
+        path: maniadrive-Makefile.patch
+      - type: patch
+        path: php-xmlbuf-new.patch
+      - type: shell
+        commands:
+           - sed -i
+               -e 's/XML2_CONFIG=.*$/XML2_CONFIG="pkg-config libxml-2.0"/'
+               -e 's/XML2_CONFIG --version/XML2_CONFIG --modversion/'
+               raydium/php/configure
+  
+  - name: maniadrive-runner
+    buildsystem: simple
+    build-commands:
+      - install mania_runner /app/bin
+      - ln -s /app/bin/data /app/game
+    sources:
+      - type: script
+        commands:
+          - exec /app/game/mania_drive "$@"
+        dest-filename: mania_runner

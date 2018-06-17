@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>org.raydium.ManiaDrive.desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>TODO</project_license>
+  <name>ManiaDrive</name>
+  <summary>Acrobatic racing game</summary>
+  <description>
+    <p>
+      ManiaDrive is a free clone of Trackmania, the great game from Nadéo studio, and is an arcade car game on acrobatic tracks, with a quick and nervous gameplay (tracks almost never exceed one minute), and features a network mode, as the original.
+    </p>
+  </description>
+  <screenshots>
+    <screenshot>
+      <image>http://maniadrive.raydium.org/screenshots/raycap2006-08-17-163810-00s.jpg</image>
+      <caption>Track: Off Road</caption>
+    </screenshot>
+    <screenshot>
+      <image>http://ftp.cqfd-corp.org/md_small.jpg</image>
+      <caption>Track</caption>
+    </screenshot>
+    <screenshot>
+      <image>http://ftp.cqfd-corp.org/mania_drive-1.1s.jpg</image>
+      <caption>Track: destorted</caption>
+    </screenshot>
+    <screenshot>
+      <image>http://ftp.cqfd-corp.org/raycap2006-09-17-144630-00.jpg</image>
+      <caption>Track: Rally (download required)</caption>
+    </screenshot>
+    <screenshot>
+      <image>http://maniadrive.raydium.org/screenshots/raycap2006-01-28-222135-00s.jpg</image>
+      <caption>Main Menu</caption>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">http://maniadrive.raydium.org/</url>
+  <releases>
+    <release version="1.2" date="2006-08-21" />
+    <release version="1.1" date="2006-08-17" />
+    <release version="1.0" date="2006-05-12" />
+  </releases>
+</component>

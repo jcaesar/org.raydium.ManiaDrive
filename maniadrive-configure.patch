@@ -1,0 +1,206 @@
+--- f/configure.orig	2018-06-10 10:58:06.595067608 +0200
++++ f/configure	2018-06-11 17:12:06.517269041 +0200
+@@ -19,7 +19,7 @@
+     echo "   Testing $1"           >> configure.log
+     echo "   ====================" >> configure.log
+     echo "$2" > configure.c
+-    gcc -g configure.c -Wall -o configure.bin $3 >> configure.log 2>> configure.log
++    gcc -g configure.c -o configure.bin $3 $LDFLAGS
+     
+     if [ "$?" != "0" ]; then
+ 	echo " build: failed"
+@@ -65,44 +65,6 @@
+ 
+ ode_install()
+ {
+-    echo "* Installing ODE..."
+-    if [ -d "ode" ]; then
+-	echo "   Old ode/ directory detected. removing it..."
+-	rm -rf ode
+-    fi
+-
+-    if [ $force_ode == "false" ]; then
+-	if [ -e "raydium/ode/lib/libode.a" ]; then
+-	    echo "   ODE install detected. If you want to reinstall, add --force-ode-install."
+-	    return 0
+-	fi
+-    else
+-	rm -rf raydium/ode
+-    fi
+-
+-# download
+-    if [ $ode_cvs = "true" ]; then
+-	echo "   Downloading from CVS ..."
+-	cvs -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/opende login
+-	exit_if_error "$?" "No CVS client installed, or network problem"
+-	cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/opende co -r UNSTABLE -P raydium/ode
+-	exit_if_error "$?" "CVS server error ? Try manual install (http://ode.org)"
+-    else
+-	echo "   Downloading 'stable CVS' version from Raydium website ..."
+-	if [ -f "raydium/ode.tar.gz" ]; then
+-	    rm -f raydium/ode.tar.gz
+-	fi
+-	wget -O raydium/ode.tar.gz http://freeway.raydium.org/data/stable_mirrors/ode.tar.gz
+-	exit_if_error "$?" "Error downloading."
+-	
+-    # uncompress
+-	echo "   Uncompressing ..."
+-	cd raydium
+-	tar xzf ode.tar.gz
+-	ret=$?
+-	cd - > /dev/null
+-	exit_if_error "$ret" "tar not found, or corrupted archive"
+-    fi
+ 
+ # configure (step 1)
+     echo '
+@@ -116,13 +78,13 @@
+ 
+ # configure (step 2)
+     echo "   Configuring ..."
+-    echo "Configuring ODE" >> configure.log
+-    echo "===============" >> configure.log
++    echo "Configuring ODE"
++    echo "==============="
+     cd raydium/ode
+-    make configure 2>>../../configure.log >>../../configure.log
++    LDFLAGS="${LDFLAGS} -fPIC" CFLAGS="${CFLAGS} -fPIC" CXXFLAGS="$CXXFLAGS -fPIC" CPPFLAGS="$CPPFLAGS -fPIC" ./configure
+     ret=$?
+     cd - > /dev/null
+-    exit_if_error "$?" "ODE configuration failed (see configure.log)"
++    exit_if_error "$ret" "ODE configuration failed (see configure.log)"
+ 
+     echo '
+ #ifndef dEpsilon
+@@ -130,39 +92,10 @@
+ #endif
+ ' >> raydium/ode/include/ode/config.h
+ 
+-# build
+-    echo "   Building ..."
+-    echo "Building ODE" >> configure.log
+-    echo "============" >> configure.log
+-    cd raydium/ode
+-    make 2>>../../configure.log >>../../configure.log
+-    ret=$?
+-    cd - > /dev/null
+-    exit_if_error "$?" "ODE Build failed (see configure.log)"
+-
+-# deleting
+-    echo "   Deleting tarball"
+-    if [ -f "raydium/ode.tar.gz" ]; then
+-	rm -f raydium/ode.tar.gz
+-    fi
+ }
+ 
+ php_install()
+ {
+-    echo "* Installing PHP5 ..."
+-    if [ -d "php" ]; then
+-	echo "   Old PHP install detected, removing."
+-	rm -rf php
+-    fi
+-
+-    if [ $force_php == "false" ]; then
+-	if [ -e "raydium/php/libs/libphp5.a" ]; then
+-	    echo "   PHP install detected. If you want to reinstall, add --force-php-install."
+-	    return 0
+-	fi
+-    else
+-	rm -rf raydium/php
+-    fi
+ 
+ # test bison
+     echo "   Testing 'bison' ..."
+@@ -176,53 +109,19 @@
+ 
+ # test libxml2
+     echo "   Testing 'libxml2' ..."
+-    xml2-config --version > /dev/null 2>&1
++    which xml2-config > /dev/null 2>&1
+     exit_if_error "$?" "xml2-config not found in path. Please install 'libxml2-devel' to compile PHP"
+ 
+-# download
+-    echo "   Downloading latest PHP5 ..."
+-    wget -O raydium/php-latest.tar.gz http://snaps.php.net/php5.2-latest.tar.gz
+-    exit_if_error "$?" "wget not found, or network error"
+-
+-# uncompress
+-    echo "   Uncompressing ..."
+-    cd raydium
+-    tar xzf php-latest.tar.gz
+-    ret=$?
+-    cd - > /dev/null
+-    exit_if_error "$ret" "tar not found, or corrupted archive"
+-
+-# rename
+-    php=`ls -dt raydium/php5*`
+-    echo "   Renaming $php to raydium/php/ ..."
+-    mv "$php" "raydium/php"
+-    exit_if_error "$?" "Is this script up to date ?"
+-
+ # configure
+     echo "   Configuring PHP ..."
+-    echo "Configuring PHP" >> configure.log
+-    echo "===============" >> configure.log
++    echo "Configuring PHP"
++    echo "==============="
+     cd raydium/php
+     ./configure --enable-embed=static --with-zlib --enable-ftp --enable-static=zlib --with-curl \
+-    --disable-simplexml --disable-xmlreader --disable-xmlwriter --enable-soap \
+-    >>../../configure.log 2>>../../configure.log
++    --disable-simplexml --disable-xmlreader --disable-xmlwriter --enable-soap --with-pic
+     ret=$?
+     cd - > /dev/null
+     exit_if_error "$ret" "PHP configure failed (missing libs ?). See configure.log"
+-
+-# compile
+-    echo "   Building PHP..."
+-    echo "Building PHP" >> configure.log
+-    echo "============" >> configure.log
+-    cd raydium/php
+-    make >>../../configure.log 2>>../../configure.log
+-    ret=$?
+-    cd - > /dev/null
+-    exit_if_error "$ret" "PHP build failed, see configure.log"
+-
+-# deleting
+-    echo "   Deleting tar.gz ..."
+-    rm -f raydium/php-latest.tar.gz
+ }
+ 
+ 
+@@ -290,7 +189,7 @@
+ test_build "GLU" "$file" "-L/usr/X11R6/lib/ -lGL -lGLU"
+ exit_if_error "$?" "You must install glu-devel package"
+ 
+-# Full GL/GLU test, looking for hardware accel
++# Full GL/GLU test, looking for hardware accel - but don't actually try create an X window. That's ridiculous in a configure script.
+ if [ $disable_x = "no" ]; then
+     file='
+ // define a dummy Raydium background for myglut :
+@@ -307,19 +206,12 @@
+ #include <string.h>
+ #include "raydium/myglut.c"
+ int main(int argc, char **argv) { 
+-char *r;
+-glutInit(&argc,argv);
+-myglutCreateWindow(320,240,RAYDIUM_RENDERING_WINDOW,"GL test");
+-
+-r=(char *)glGetString(GL_RENDERER);
+-if(!strcmp(r,"Mesa GLX Indirect"))
+-    {
+-    fprintf(stderr,"WARNING ! Mesa Software renderer detected !");
+-    fprintf(stdout,"WARNING ! Mesa Software renderer detected !");
+-    }
+-return 0; }
++// just check definedness
++int consttest = RAYDIUM_RENDERING_WINDOW;
++int functest = glutInit && myglutCreateWindow && glGetString;
++return functest? 0:1; }
+ '
+-    test_build "GL/GLU hardware support" "$file" "-L/usr/X11R6/lib/ -lGL -lGLU"
++    test_build "GL/GLU hardware support" "$file" "-L/usr/X11R6/lib/ -lGL -lGLU -lX11"
+     exit_if_error "$?" "Full GL test failed, see configure.log"
+ else
+     echo " DISABLED";
